@@ -285,9 +285,25 @@ class AuroraConsentView extends StatefulWidget {
 class _AuroraConsentViewState extends State<AuroraConsentView> {
   bool _showLoader = false;
 
-  Future<void> _nebulaMark() async {
-    final nebulaPrefs = await SharedPreferences.getInstance();
-    await nebulaPrefs.setBool('auth_viewed', true);
+  Future<void> _markAndGo() async {
+    setState(() => _showLoader = true);
+
+    // Запрос ATT (можно убрать/заменить если не нужен)
+    try {
+      await gossamer_att.AppTrackingTransparency.requestTrackingAuthorization();
+    } catch (_) {}
+
+    // Сохраняем consent
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auth_viewed', true);
+
+    // Даем время на лоадер
+    await Future.delayed(const Duration(milliseconds: 1600));
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const CelestialOnboardingView()),
+    );
   }
 
   @override
@@ -302,104 +318,87 @@ class _AuroraConsentViewState extends State<AuroraConsentView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<NebulaATTBloc, HypercubeATTState>(
-      listener: (context, state) async {
-        if (state == HypercubeATTState.granted || state == HypercubeATTState.denied) {
-          setState(() => _showLoader = true);
-          await Future.delayed(const Duration(milliseconds: 1600));
-          await _nebulaMark();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const CelestialOnboardingView()),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (_showLoader || state == HypercubeATTState.seeking) {
-          return const Scaffold(
-            backgroundColor: Colors.black,
-            body: AmonjongLoader(),
-          );
-        }
-        return Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: Container(
-              width: 350,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Color(0xFFFFD700), // Золотая рамка
-                  width: 2.8,
+    if (_showLoader) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: AmonjongLoader(),
+      );
+    }
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Color(0xFFFFD700),
+              width: 2.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.privacy_tip_outlined, size: 56, color: Colors.white),
+              const SizedBox(height: 20),
+              const Text(
+                'Personalized Experience',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.amber,
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.18),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  )
-                ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.privacy_tip_outlined, size: 56, color: Colors.white),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Personalized Experience',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.amber,
-                      fontSize: 19,
+              const SizedBox(height: 15),
+              const Text(
+                'Your preferences help us provide you with more relevant offers, bonuses, and notifications. We never sell or misuse your personal information — your privacy is our top priority.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Your preferences help us provide you with more relevant offers, bonuses, and notifications. We never sell or misuse your personal information — your privacy is our top priority.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      height: 1.35,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() => _showLoader = true);
-                        context.read<NebulaATTBloc>().add(HypercubeATTEvent.awaken);
-                      },
-                      child: const Text('Continue'),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'You can change your choice in your device settings anytime.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.amber),
-                  ),
-                ],
+                  onPressed: _markAndGo,
+                  child: const Text('Continue'),
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              const Text(
+                'You can change your choice in your device settings anytime.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.amber),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
