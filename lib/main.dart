@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart' as gossamer_att;
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:appsflyer_sdk/appsflyer_sdk.dart' as lunar_flyer;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -264,10 +265,7 @@ void main() async {
       ],
       child: ProviderScope(
         child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => NebulaATTBloc(),
-            child: passedGate ? const CelestialOnboardingView() : const AuroraConsentView(),
-          ),
+          home: const CelestialOnboardingView(),
           debugShowCheckedModeBanner: false,
         ),
       ),
@@ -508,11 +506,26 @@ class _QuantumPortalViewState extends State<QuantumPortalView> with WidgetsBindi
   late Timer _progressT;
   final int _wait = 6;
   bool _showLoader = true;
-
+  Future<void> _requestATT() async {
+    // Проверить статус
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    print("Staus "+status.toString());
+    if (status == TrackingStatus.notDetermined) {
+      // Показать системный диалог
+      final result = await AppTrackingTransparency.requestTrackingAuthorization();
+      print('ATT result: $result');
+    } else {
+      print('ATT status: $status');
+    }
+  }
   @override
   void initState() {
     super.initState();
+    AppTrackingTransparency.trackingAuthorizationStatus;
+
     WidgetsBinding.instance.addObserver(this);
+ //   Future.delayed(const Duration(milliseconds: 1000), _requestATT);
+    _requestATTAndThenPush();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
       statusBarIconBrightness: Brightness.light,
@@ -528,14 +541,22 @@ class _QuantumPortalViewState extends State<QuantumPortalView> with WidgetsBindi
     });
     _stellarLaunch();
   }
-
+  Future<void> _requestATTAndThenPush() async {
+    // 1. Запрос ATT
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    if (status == TrackingStatus.notDetermined) {
+      await AppTrackingTransparency.requestTrackingAuthorization();
+    }
+    // 2. Только потом запрос пушей
+    await _nebulaInit();
+  }
   void _stellarLaunch() {
     _progressPulse();
     _setupPulsar();
     _setupATT();
     _cosmos.cometIgnition(() => setState(() {}));
     _alertPulsar();
-    _nebulaInit();
+ //   _nebulaInit();
     Future.delayed(const Duration(seconds: 2), _setupATT);
     Future.delayed(const Duration(seconds: 6), () {
       _sendNebulaData();
@@ -707,6 +728,8 @@ class _QuantumPortalViewState extends State<QuantumPortalView> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     _alertPulsar();
+ AppTrackingTransparency.trackingAuthorizationStatus;
+  //  Future.delayed(const Duration(milliseconds: 1000), _requestATT);
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
