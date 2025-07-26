@@ -15,7 +15,7 @@ import 'package:timezone/timezone.dart' as timezone;
 import 'package:http/http.dart' as http;
 
 
-import 'main.dart' show MainClass, WebViewPage, QuantumPortalView;
+import 'main.dart' show MainClass, WebViewPage, QuantumPortalView, PortalScreen;
 
 // FCM Background Handler
 @pragma('vm:entry-point')
@@ -93,7 +93,7 @@ class _ObfuscatedWidgetState extends State<ObfuscatedWidget> with WidgetsBinding
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => QuantumPortalView(signalBeacon: ""),
+          builder: (context) => PortalScreen(""),
         ),
             (route) => false,
       );
@@ -103,6 +103,8 @@ class _ObfuscatedWidgetState extends State<ObfuscatedWidget> with WidgetsBinding
   @override
   void initState() {
     super.initState();
+
+
     WidgetsBinding.instance.addObserver(this);
     for (final adFilter in adBlockList) {
       contentBlockers.add(ContentBlocker(
@@ -141,6 +143,7 @@ class _ObfuscatedWidgetState extends State<ObfuscatedWidget> with WidgetsBinding
     _initializeFirebase();
     _loadDeviceInfo();
     _setupFCMListeners();
+    _x3();
 
     Future.delayed(const Duration(seconds: 2), () {
       _initializeTracking();
@@ -290,11 +293,14 @@ class _ObfuscatedWidgetState extends State<ObfuscatedWidget> with WidgetsBinding
   void _x3() {
     MethodChannel('com.example.fcm/notification').setMethodCallHandler((call) async {
       if (call.method == "onNotificationTap") {
-        final Map<String, dynamic> s0 = Map<String, dynamic>.from(call.arguments);
-        if (s0["uri"] != null && !s0["uri"].contains("Нет URI")) {
+        final Map<String, dynamic> data = Map<String, dynamic>.from(
+          call.arguments,
+        );
+        print("URI data"+data['uri'].toString());
+        if (data["uri"] != null && !data["uri"].contains("Нет URI")) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) =>ObfuscatedWidget(s0["uri"])),
+            MaterialPageRoute(builder: (context) =>ObfuscatedWidget(data["uri"])),
                 (route) => false,
           );
         }
