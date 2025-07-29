@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:app_tracking_transparency/app_tracking_transparency.dart' show AppTrackingTransparency, TrackingStatus;
+
 import 'package:appsflyer_sdk/appsflyer_sdk.dart' show AppsFlyerOptions, AppsflyerSdk;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -128,7 +128,7 @@ class _ExampleWebWidgetState extends State<ExampleWebWidget> with WidgetsBinding
             selector: ".banner, .banners, .ads, .ad, .advert")));
 
     FirebaseMessaging.onBackgroundMessage(msgBackgroundHandler);
-    setupTracking();
+   // setupTracking();
     setupAppsFlyer();
     setupNotificationChannel();
     setupDeviceInfo();
@@ -151,7 +151,7 @@ class _ExampleWebWidgetState extends State<ExampleWebWidget> with WidgetsBinding
     });
 
     Future.delayed(const Duration(seconds: 2), () {
-      setupTracking();
+     // setupTracking();
     });
     Future.delayed(const Duration(seconds: 6), () {
       sendUserData();
@@ -197,15 +197,7 @@ class _ExampleWebWidgetState extends State<ExampleWebWidget> with WidgetsBinding
     instId = await fcm.getToken();
   }
 
-  Future<void> setupTracking() async {
-    final TrackingStatus stat = await AppTrackingTransparency.trackingAuthorizationStatus;
-    if (stat == TrackingStatus.notDetermined) {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      await AppTrackingTransparency.requestTrackingAuthorization();
-    }
-    final uuid = await AppTrackingTransparency.getAdvertisingIdentifier();
-    print("UUID: $uuid");
-  }
+
 
   AppsflyerSdk? appsFlyerInstance;
   String appsFlyerUID = "";
