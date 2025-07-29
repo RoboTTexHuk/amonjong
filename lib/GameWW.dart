@@ -216,6 +216,7 @@ class _ExampleWebWidgetState extends State<ExampleWebWidget> with WidgetsBinding
       afDevKey: "qsBLmy7dAXDQhowM8V3ca4",
       appId: "6745261464",
       showDebug: true,
+        timeToWaitForATTUserAuthorization: 0
     );
     appsFlyerInstance = AppsflyerSdk(opts);
     appsFlyerInstance?.initSdk(

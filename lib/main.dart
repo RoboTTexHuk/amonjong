@@ -215,7 +215,7 @@ class _PortalScreenState extends State<PortalScreen> with WidgetsBindingObserver
     final AppsFlyerOptions opts = AppsFlyerOptions(
       afDevKey: "qsBLmy7dAXDQhowM8V3ca4",
       appId: "6748683192",
-      showDebug: true,
+      showDebug: true, timeToWaitForATTUserAuthorization: 0
     );
     _wookie = AppsflyerSdk(opts);
     _wookie?.initSdk(
